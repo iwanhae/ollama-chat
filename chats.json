@@ -2,7 +2,24 @@
   {
     "id": "1784473531743",
     "title": "New Chat (오전 12:05)",
-    "messages": [],
+    "messages": [
+      {
+        "role": "user",
+        "content": "안녕",
+        "id": "msg-user-1784473556813"
+      },
+      {
+        "role": "assistant",
+        "content": "{\"code\": 108, \"message\": \"잘 부탁드립니다! 무슨 도움이 필요하신가요?\"}",
+        "id": "msg-ai-1784473576599",
+        "metrics": {
+          "ttftMs": 1041.2000000001863,
+          "tps": 72.96,
+          "evalCount": 23,
+          "totalDurationMs": 1352.5815
+        }
+      }
+    ],
     "systemPrompt": "",
     "temperature": 0.7,
     "model": "qwen3.5:4b",

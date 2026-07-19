@@ -70,9 +70,7 @@ export function MessageRow({
         <div>
           {showThinking && thinkingText && (
             <div className="thinking-process-block">
-              <div className="thinking-title">
-                <span>💭 Thinking Process</span>
-              </div>
+              <div className="thinking-title">THINKING PROCESS</div>
               <div className="thinking-content">{thinkingText}</div>
             </div>
           )}
@@ -90,7 +88,7 @@ export function MessageRow({
         <div>
           {showThinking && thinkingText && (
             <div className="thinking-process-block">
-              <div className="thinking-title">💭 Thinking Process</div>
+              <div className="thinking-title">THINKING PROCESS</div>
               <div className="thinking-content">{thinkingText}</div>
             </div>
           )}
@@ -104,14 +102,21 @@ export function MessageRow({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.6 }}
       className={`message-row ${msg.role}`}
     >
-      <div className="message-bubble-wrapper">
-        <div className="message-bubble">{renderMessageContent(msg.content)}</div>
-        {!isGenerating && (
+      <div className="message-header">
+        {msg.role === "user" ? "User" : "Assistant"}
+      </div>
+      
+      <div className="message-content">
+        {renderMessageContent(msg.content)}
+      </div>
+
+      {!isGenerating && (
+        <div className="message-footer">
           <div className="message-actions">
             {msg.role === "user" && (
               <button
@@ -119,7 +124,7 @@ export function MessageRow({
                 onClick={() => handleEditMessage(index)}
                 title="이전 대화로 분기 및 편집 (Edit & Branch)"
               >
-                ✏️ 편집 및 분기
+                EDIT
               </button>
             )}
             {msg.role === "assistant" && msg.content && (
@@ -128,17 +133,18 @@ export function MessageRow({
                 onClick={() => handleRegenerate(index)}
                 title="이후 답변 재생성 (Regenerate)"
               >
-                ↻ 답변 재생성
+                REGENERATE
               </button>
             )}
-            {msg.role === "assistant" && msg.metrics && (
-              <span className="msg-metrics" style={{ marginLeft: "8px", fontSize: "11px", color: "var(--text-secondary)" }}>
-                TTFT: {(msg.metrics.ttftMs! / 1000).toFixed(2)}s | TPS: {msg.metrics.tps} | Total: {msg.metrics.evalCount} tok
-              </span>
-            )}
           </div>
-        )}
-      </div>
+          
+          {msg.role === "assistant" && msg.metrics && (
+            <div className="msg-metrics">
+              [ TTFT: {(msg.metrics.ttftMs! / 1000).toFixed(2)}s ] [ TPS: {msg.metrics.tps} ] [ Total: {msg.metrics.evalCount} ]
+            </div>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -6,13 +6,13 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ manager }: ChatInputProps) {
-  const { inputText, setInputText, isGenerating, isOnline, selectedModel, handleSubmit } = manager;
+  const { inputText, setInputText, isGenerating, isOnline, handleSubmit } = manager;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
     }
   }, [inputText]);
 
@@ -25,18 +25,22 @@ export function ChatInput({ manager }: ChatInputProps) {
 
   return (
     <div className="input-area">
-      <div className="input-container">
-        <textarea
-          id="main-chat-input"
-          ref={textareaRef}
-          rows={1}
-          className="chat-input"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="무엇이든 물어보세요... (Shift+Enter로 줄바꿈, Enter로 전송)"
-          disabled={isGenerating || !isOnline}
-        />
+      <textarea
+        id="main-chat-input"
+        ref={textareaRef}
+        rows={1}
+        className="chat-input"
+        value={inputText}
+        onChange={(e) => setInputText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Type a message... (Shift+Enter for new line)"
+        disabled={isGenerating || !isOnline}
+      />
+      
+      <div className="input-footer">
+        <div className="input-meta">
+          Local Engine Active
+        </div>
         <button
           className="send-btn"
           onClick={handleSubmit}
@@ -44,10 +48,6 @@ export function ChatInput({ manager }: ChatInputProps) {
         >
           ↑
         </button>
-      </div>
-      <div className="input-meta">
-        <span>Model: {selectedModel || "None"}</span>
-        <span>Bun + Vite + React App</span>
       </div>
     </div>
   );

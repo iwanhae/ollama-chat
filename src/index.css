@@ -1,140 +1,68 @@
-/* Apple design foundations translated for the web (Light Mode) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap');
 
 :root {
-  /* System Font Stack - Native Apple look and feel */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: "SF Mono", SFMono-Regular, Consolas, Menlo, monospace;
-
-  /* Apple-inspired Color Palette (Bright Light Theme) */
-  --bg-black: #ffffff; /* Bright white base canvas */
-  --bg-deep: #f5f5f7; /* Off-white system background */
-  --bg-sidebar: rgba(245, 245, 247, 0.75); /* Frosted sidebar */
-  --bg-card: #ffffff; /* Solid white card */
-  --bg-card-hover: rgba(0, 0, 0, 0.03);
-  --bg-active: rgba(0, 0, 0, 0.06);
+  /* Swiss Architectural Palette */
+  --bg-primary: #F4F4F0; /* Warm Alabaster */
+  --bg-secondary: #FFFFFF; /* Pure paper */
+  --bg-panel: #EAEAE4; /* Slightly darker for control surfaces */
   
-  /* Borders */
-  --border-light: rgba(0, 0, 0, 0.08);
-  --border-active: rgba(0, 0, 0, 0.15);
+  --text-primary: #1C1C1A; /* Espresso Black */
+  --text-secondary: #5C5C56; /* Muted Slate */
+  --text-tertiary: #8C8C86; /* Faded Metadata */
   
-  /* Text colors */
-  --text-primary: #1d1d1f; /* Apple's dark charcoal text */
-  --text-secondary: #515154; /* Apple's secondary grey text */
-  --text-muted: #86868b; /* Apple's muted grey text */
-
-  /* Colors */
-  --accent-blue: #007aff;
-  --accent-blue-hover: #0062cc;
-  --accent-blue-glow: rgba(0, 122, 255, 0.15);
-  --accent-purple: #af52de;
-  --accent-cyan: #30b0c7;
-  --danger-red: #ff3b30;
-
-  --sidebar-width: 280px;
-
-  /* Standard Apple spring timing transitions for CSS fallbacks */
-  --spring-duration: 0.3s;
-  --spring-timing: cubic-bezier(0.16, 1, 0.3, 1); /* Apple ease-out */
+  --border-light: rgba(28, 28, 26, 0.08); /* Hairline rule */
+  --border-strong: rgba(28, 28, 26, 0.2);
+  
+  --accent-primary: #C86A58; /* Dusty Terracotta */
+  --accent-hover: #B55B49;
+  
+  /* Typography Variables */
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: 'Newsreader', 'Times New Roman', Times, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace;
 }
 
-/* CSS resets & custom elements */
-* {
+*, *::before, *::after {
   box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
   padding: 0;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-
-body {
-  font-family: var(--font-sans);
-  background-color: var(--bg-black);
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-primary);
   color: var(--text-primary);
-  min-height: 100vh;
-  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background: var(--bg-black);
+  width: 100%;
+  height: 100%;
 }
 
-/* Enable selection in messages and inputs only */
-.message-bubble, .chat-input, code, pre, .markdown-body {
-  user-select: text;
-}
-
-/* Scrollbar styles matching macOS light mode */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-/* Typography styles matching Apple guidelines */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  letter-spacing: -0.02em; /* Tight tracking for headers */
-  color: var(--text-primary);
-}
-
-p {
-  line-height: 1.45;
-  letter-spacing: -0.01em; /* Subtle tight tracking for body text */
-}
-
-button, input, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
+button {
+  font-family: var(--font-ui);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
   color: inherit;
 }
 
-/* Micro-interaction: Apple tactile feedback on click */
-button:active, 
-.history-item:active, 
-.suggestion-card:active,
-.icon-btn:active {
-  transform: scale(0.96) !important;
-  transition: transform 0.08s cubic-bezier(0.25, 1, 0.5, 1) !important;
+input, textarea, select {
+  font-family: var(--font-ui);
 }
 
-/* Accessibility / Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
 }
-
-@media (prefers-reduced-transparency: reduce) {
-  :root {
-    --bg-sidebar: #f5f5f7;
-  }
-  .sidebar, .chat-header, .input-area {
-    backdrop-filter: none !important;
-    background: #f5f5f7 !important;
-  }
+a:hover {
+  text-decoration: underline;
 }
