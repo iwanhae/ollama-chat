@@ -1,6 +1,23 @@
 import { motion } from "framer-motion";
 import { marked } from "marked";
+import { markedHighlight } from "marked-highlight";
+import hljs from "highlight.js";
+import markedKatex from "marked-katex-extension";
 import type { Message, ChatSession } from "../types/chat";
+
+marked.use(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+      return hljs.highlight(code, { language }).value;
+    }
+  })
+);
+
+marked.use(markedKatex({
+  throwOnError: false
+}));
 
 interface MessageRowProps {
   msg: Message;

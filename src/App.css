@@ -358,6 +358,13 @@
   margin-bottom: 16px;
 }
 
+.markdown-body strong, .markdown-body b {
+  font-weight: 700;
+  color: var(--bg-primary);
+  background-color: var(--text-primary);
+  padding: 0 4px;
+}
+
 /* Blinking cursor for the last text node while generating */
 .message-row.is-generating .markdown-body > *:last-child::after {
   content: ' █';

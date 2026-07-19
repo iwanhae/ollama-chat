@@ -1,9 +1,10 @@
 import { useRef, useEffect } from "react";
-
 import { useChatManager } from "./hooks/useChatManager";
 import { TopControlBar } from "./components/TopControlBar";
 import { MessageRow } from "./components/MessageRow";
 import { ChatInput } from "./components/ChatInput";
+import "highlight.js/styles/github.css"; // Clean fallback style
+import "katex/dist/katex.min.css";
 import "./App.css";
 
 const SUGGESTIONS = [
