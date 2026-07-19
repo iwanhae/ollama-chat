@@ -1,41 +1,54 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+/* Apple design foundations translated for the web */
 
 :root {
-  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  --font-mono: 'Fira Code', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  /* System Font Stack - Native Apple look and feel */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", SFMono-Regular, Consolas, Menlo, monospace;
 
-  /* Color Palette - Premium Dark Theme */
-  --bg-deep: #090d16;
-  --bg-card: rgba(17, 24, 39, 0.7);
-  --bg-sidebar: rgba(13, 18, 30, 0.95);
-  --border-light: rgba(255, 255, 255, 0.08);
-  --border-glow: rgba(124, 58, 237, 0.3);
+  /* Apple-inspired Color Palette (Dark Theme) */
+  --bg-black: #000000;
+  --bg-deep: #09090b;
+  --bg-sidebar: rgba(18, 18, 22, 0.6);
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-card-hover: rgba(255, 255, 255, 0.08);
+  --bg-active: rgba(255, 255, 255, 0.1);
   
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  /* Borders */
+  --border-light: rgba(255, 255, 255, 0.06);
+  --border-active: rgba(255, 255, 255, 0.15);
+  
+  /* Text colors */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.35);
 
-  --accent-purple: #8b5cf6;
-  --accent-blue: #3b82f6;
-  --accent-cyan: #06b6d4;
-  --accent-glow: rgba(139, 92, 246, 0.4);
+  /* Colors */
+  --accent-blue: #007aff;
+  --accent-blue-hover: #1a85ff;
+  --accent-blue-glow: rgba(0, 122, 255, 0.3);
+  --accent-purple: #af52de;
+  --accent-cyan: #5ac8fa;
+  --danger-red: #ff453a;
 
-  --sidebar-width: 320px;
+  --sidebar-width: 280px;
+
+  /* Standard Apple spring timing transitions for CSS fallbacks */
+  --spring-duration: 0.3s;
+  --spring-timing: cubic-bezier(0.16, 1, 0.3, 1); /* Apple ease-out */
 }
 
+/* CSS resets & custom elements */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-deep);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
-  background-attachment: fixed;
+  background-color: var(--bg-black);
   color: var(--text-primary);
   min-height: 100vh;
   overflow: hidden;
@@ -48,12 +61,18 @@ body {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  background: var(--bg-black);
 }
 
-/* Custom Scrollbar */
+/* Enable selection in messages and inputs only */
+.message-bubble, .chat-input, code, pre {
+  user-select: text;
+}
+
+/* Scrollbar styles matching macOS */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -61,10 +80,61 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 58, 237, 0.5);
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Typography styles matching Apple guidelines */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em; /* Tight tracking for headers */
+  color: var(--text-primary);
+}
+
+p {
+  line-height: 1.45;
+  letter-spacing: -0.01em; /* Subtle tight tracking for body text */
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Micro-interaction: Apple tactile feedback on click */
+button:active, 
+.history-item:active, 
+.suggestion-card:active,
+.icon-btn:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.08s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+
+/* Accessibility / Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --bg-sidebar: #121216;
+  }
+  .sidebar, .chat-header, .input-area {
+    backdrop-filter: none !important;
+    background: #121216 !important;
+  }
 }

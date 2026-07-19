@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
 
 interface Message {
   role: "user" | "assistant" | "system";
   content: string;
+  id?: string;
 }
 
 interface ChatSession {
@@ -95,7 +97,7 @@ function App() {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
     }
   }, [inputText]);
 
@@ -194,12 +196,12 @@ function App() {
     setInputText("");
 
     // 1. Add User Message
-    const userMsg: Message = { role: "user", content: userPrompt };
+    const userMsg: Message = { role: "user", content: userPrompt, id: `msg-user-${Date.now()}` };
     const updatedMessages = [...activeChat.messages, userMsg];
 
     // Update active chat title if it's the first message
     const currentTitle = activeChat.title.startsWith("New Chat")
-      ? (userPrompt.length > 20 ? userPrompt.substring(0, 20) + "..." : userPrompt)
+      ? (userPrompt.length > 15 ? userPrompt.substring(0, 15) + "..." : userPrompt)
       : activeChat.title;
 
     setChats((prev) =>
@@ -218,7 +220,7 @@ function App() {
     setIsGenerating(true);
 
     const assistantMsgIndex = updatedMessages.length;
-    const initialAssistantMsg: Message = { role: "assistant", content: "" };
+    const initialAssistantMsg: Message = { role: "assistant", content: "", id: `msg-ai-${Date.now()}` };
 
     setChats((prev) =>
       prev.map((c) =>
@@ -323,7 +325,6 @@ function App() {
     return parts.map((part, index) => {
       // Odd indices are code blocks
       if (index % 2 === 1) {
-        // Extract language if specified, e.g. "python\n..."
         const firstLineEnd = part.indexOf("\n");
         let lang = "";
         let code = part;
@@ -333,12 +334,12 @@ function App() {
         }
         return (
           <pre key={index}>
-            {lang && <div style={{ fontSize: "10px", color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase" }}>{lang}</div>}
+            {lang && <div style={{ fontSize: "9px", color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{lang}</div>}
             <code>{code}</code>
           </pre>
         );
       }
-      // Even indices are text blocks. Render basic line breaks.
+      // Even indices are text blocks.
       return (
         <span key={index} style={{ whiteSpace: "pre-wrap" }}>
           {part}
@@ -357,17 +358,17 @@ function App() {
         >
           ☰
         </button>
-        <span className="brand-title" style={{ fontSize: "16px", marginLeft: "12px" }}>
-          Ollama Chat
+        <span className="brand-title" style={{ fontSize: "14px", marginLeft: "10px" }}>
+          Ollama Playground
         </span>
       </div>
 
-      {/* Sidebar Panel */}
+      {/* Sidebar Panel (translucent with blur) */}
       <div className={`sidebar ${mobileMenuOpen ? "open" : ""}`}>
         <div className="brand-section">
-          <div className="brand-logo">O</div>
+          <div className="brand-logo">⌘</div>
           <span className="brand-title">Ollama Console</span>
-          <span className="brand-version">v1.0</span>
+          <span className="brand-version">v1.1</span>
         </div>
 
         <div className="sidebar-content">
@@ -438,7 +439,7 @@ function App() {
             <span className="section-label">Chat History</span>
             <div className="history-list">
               {chats.map((chat) => (
-                <div
+                <button
                   key={chat.id}
                   className={`history-item ${chat.id === activeChatId ? "active" : ""}`}
                   onClick={() => {
@@ -446,14 +447,33 @@ function App() {
                     setMobileMenuOpen(false);
                   }}
                 >
+                  {/* Shared layout active highlight pill */}
+                  {chat.id === activeChatId && (
+                    <motion.div
+                      layoutId="activeHighlight"
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        background: "var(--bg-card)",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border-light)",
+                        zIndex: 1,
+                      }}
+                      transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+                    />
+                  )}
+                  
                   <span className="history-title">{chat.title}</span>
                   <button
                     className="delete-history-btn"
                     onClick={(e) => deleteChat(chat.id, e)}
                   >
-                    🗑️
+                    ✕
                   </button>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -467,11 +487,11 @@ function App() {
           </span>
           <button
             className="icon-btn"
-            style={{ marginLeft: "auto", width: "28px", height: "28px" }}
+            style={{ marginLeft: "auto", width: "24px", height: "24px", borderRadius: "50%" }}
             onClick={fetchModels}
             title="Refresh Ollama Connection"
           >
-            🔄
+            ↻
           </button>
         </div>
       </div>
@@ -494,7 +514,7 @@ function App() {
               🗑️
             </button>
             <button className="icon-btn" onClick={() => createNewChat()} title="Start New Session">
-              ➕
+              ＋
             </button>
           </div>
         </div>
@@ -503,6 +523,7 @@ function App() {
         <div className="chat-messages">
           {activeChat && activeChat.messages.length === 0 ? (
             <div className="empty-state">
+              <div className="empty-logo">⌘</div>
               <h1 className="empty-title">Ollama Playground</h1>
               <p className="empty-subtitle">
                 Bun과 React로 구동되는 로컬 AI 플레이그라운드입니다. 아래 제안들을 시험해 보거나 직접 프롬프트를 작성해 보세요.
@@ -522,25 +543,36 @@ function App() {
             </div>
           ) : (
             activeChat?.messages.map((msg, index) => (
-              <div key={index} className={`message-row ${msg.role}`}>
-                <div className="message-avatar">
-                  {msg.role === "user" ? "U" : "AI"}
-                </div>
+              <motion.div
+                key={msg.id || index}
+                initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                className={`message-row ${msg.role}`}
+              >
                 <div className="message-bubble">
                   {renderMessageContent(msg.content)}
                 </div>
-              </div>
+              </motion.div>
             ))
           )}
 
           {/* Typing Indicator */}
-          {isGenerating && (
-            <div className="typing-indicator">
-              <div className="typing-dot"></div>
-              <div className="typing-dot"></div>
-              <div className="typing-dot"></div>
-            </div>
-          )}
+          <AnimatePresence>
+            {isGenerating && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                className="typing-indicator"
+              >
+                <div className="typing-dot"></div>
+                <div className="typing-dot"></div>
+                <div className="typing-dot"></div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div ref={messagesEndRef} />
         </div>
 
@@ -562,7 +594,7 @@ function App() {
               onClick={handleSubmit}
               disabled={!inputText.trim() || isGenerating || !isOnline}
             >
-              ➔
+              ↑
             </button>
           </div>
           <div className="input-meta">
