@@ -33,6 +33,51 @@ serve({
       }
     }
 
+    // 2. API: Get Server-Side Chats history
+    if (url.pathname === "/api/chats" && req.method === "GET") {
+      try {
+        const file = Bun.file("./chats.json");
+        if (await file.exists()) {
+          const content = await file.text();
+          return new Response(content, {
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          });
+        }
+        return new Response("[]", {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      } catch (err) {
+        console.error("Error reading chats file:", err);
+        return new Response("[]", { headers: { "Content-Type": "application/json" } });
+      }
+    }
+
+    // 3. API: Save Server-Side Chats history
+    if (url.pathname === "/api/chats" && req.method === "POST") {
+      try {
+        const chatsData = await req.json();
+        await Bun.write("./chats.json", JSON.stringify(chatsData, null, 2));
+        return new Response(JSON.stringify({ success: true }), {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      } catch (err) {
+        console.error("Error saving chats file:", err);
+        return new Response(JSON.stringify({ error: "Failed to save chats" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // 2. API: Chat (Streaming proxy)
     if (url.pathname === "/api/chat" && req.method === "POST") {
       try {

@@ -70,32 +70,66 @@ function App() {
   // 1. Fetch models and load chats on mount
   useEffect(() => {
     fetchModels();
-
-    const savedChats = localStorage.getItem("ollama_chats");
-    if (savedChats) {
-      try {
-        const parsed = JSON.parse(savedChats) as ChatSession[];
-        setChats(parsed);
-        if (parsed.length > 0) {
-          setActiveChatId(parsed[0].id);
-        } else {
-          createNewChat();
-        }
-      } catch (err) {
-        console.error("Failed to parse saved chats:", err);
-        createNewChat();
-      }
-    } else {
-      createNewChat();
-    }
+    loadChatsFromServer();
   }, []);
 
-  // Save chats to localStorage on changes
-  useEffect(() => {
-    if (chats.length > 0) {
-      localStorage.setItem("ollama_chats", JSON.stringify(chats));
+  const loadChatsFromServer = async () => {
+    try {
+      const response = await fetch("/api/chats");
+      if (response.ok) {
+        const data = await response.json() as ChatSession[];
+        if (data && data.length > 0) {
+          setChats(data);
+          setActiveChatId(data[0].id);
+          return;
+        }
+      }
+      createNewChat();
+    } catch (err) {
+      console.error("Failed to load chats from server, falling back to localStorage:", err);
+      const savedChats = localStorage.getItem("ollama_chats");
+      if (savedChats) {
+        try {
+          const parsed = JSON.parse(savedChats) as ChatSession[];
+          setChats(parsed);
+          if (parsed.length > 0) {
+            setActiveChatId(parsed[0].id);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to parse local storage fallback:", e);
+        }
+      }
+      createNewChat();
     }
+  };
+
+  // Save chats to localStorage and server (debounced to prevent multiple writes during stream generation)
+  useEffect(() => {
+    if (chats.length === 0) return;
+
+    // Instant local backup
+    localStorage.setItem("ollama_chats", JSON.stringify(chats));
+
+    // Debounced server write
+    const writeTimer = setTimeout(() => {
+      saveChatsToServer(chats);
+    }, 1500);
+
+    return () => clearTimeout(writeTimer);
   }, [chats]);
+
+  const saveChatsToServer = async (chatsList: ChatSession[]) => {
+    try {
+      await fetch("/api/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(chatsList),
+      });
+    } catch (err) {
+      console.error("Failed to save chats to server:", err);
+    }
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
