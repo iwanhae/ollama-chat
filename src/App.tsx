@@ -257,6 +257,7 @@ function App() {
         body: JSON.stringify({
           model: selectedModel || activeChat.model,
           messages: messagesPayload,
+          think: activeChat.enableThinking ?? true, // Set think parameter at request level
           options: {
             temperature: activeChat.temperature,
           },
@@ -273,40 +274,62 @@ function App() {
       const decoder = new TextDecoder("utf-8");
       let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        let hasStartedThinking = false;
+        let hasFinishedThinking = false;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        // Keep the last incomplete line in the buffer
-        buffer = lines.pop() || "";
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
 
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const parsed = JSON.parse(line);
-            const chunk = parsed.message?.content || "";
+          // Keep the last incomplete line in the buffer
+          buffer = lines.pop() || "";
 
-            setChats((prev) =>
-              prev.map((c) => {
-                if (c.id !== activeChatId) return c;
-                const newMessages = [...c.messages];
-                if (newMessages[assistantMsgIndex]) {
-                  newMessages[assistantMsgIndex] = {
-                    ...newMessages[assistantMsgIndex],
-                    content: newMessages[assistantMsgIndex].content + chunk,
-                  };
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const parsed = JSON.parse(line);
+              
+              let chunk = "";
+              const thinkingToken = parsed.message?.thinking || "";
+              const contentToken = parsed.message?.content || "";
+
+              if (thinkingToken) {
+                if (!hasStartedThinking) {
+                  chunk += "<think>";
+                  hasStartedThinking = true;
                 }
-                return { ...c, messages: newMessages };
-              })
-            );
-          } catch (e) {
-            console.warn("Could not parse ndjson line:", line, e);
+                chunk += thinkingToken;
+              } else if (contentToken) {
+                if (hasStartedThinking && !hasFinishedThinking) {
+                  chunk += "</think>\n\n";
+                  hasFinishedThinking = true;
+                }
+                chunk += contentToken;
+              }
+
+              if (!chunk) continue;
+
+              setChats((prev) =>
+                prev.map((c) => {
+                  if (c.id !== activeChatId) return c;
+                  const newMessages = [...c.messages];
+                  if (newMessages[assistantMsgIndex]) {
+                    newMessages[assistantMsgIndex] = {
+                      ...newMessages[assistantMsgIndex],
+                      content: newMessages[assistantMsgIndex].content + chunk,
+                    };
+                  }
+                  return { ...c, messages: newMessages };
+                })
+              );
+            } catch (e) {
+              console.warn("Could not parse ndjson line:", line, e);
+            }
           }
         }
-      }
     } catch (err: any) {
       console.error("Stream generation failed:", err);
       setChats((prev) =>
