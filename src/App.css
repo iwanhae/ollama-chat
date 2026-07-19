@@ -568,6 +568,49 @@
   border-radius: 4px;
 }
 
+/* Styled thinking process block */
+.thinking-process-block {
+  background: rgba(0, 0, 0, 0.025);
+  border-left: 2px solid var(--text-muted);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.thinking-title {
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thinking-content {
+  font-style: italic;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
+/* User Message specific Thinking Overrides */
+.message-row.user .thinking-process-block {
+  background: rgba(255, 255, 255, 0.12);
+  border-left-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.message-row.user .thinking-title {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+
 .markdown-body pre {
   background: #f6f8fa;
   border: 1px solid rgba(0, 0, 0, 0.06);

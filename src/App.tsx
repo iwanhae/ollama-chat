@@ -22,6 +22,7 @@ interface ChatSession {
   systemPrompt: string;
   temperature: number;
   model: string;
+  enableThinking?: boolean; // Toggle to show/hide thinking block
 }
 
 interface OllamaModel {
@@ -154,6 +155,7 @@ function App() {
       systemPrompt: "You are a helpful and polite AI Assistant.",
       temperature: 0.7,
       model: defaultModel,
+      enableThinking: true, // Default enabled
     };
     setChats((prev) => [newChat, ...prev]);
     setActiveChatId(newChat.id);
@@ -182,7 +184,7 @@ function App() {
     }
   };
 
-  const updateActiveChatSettings = (key: "systemPrompt" | "temperature", value: any) => {
+  const updateActiveChatSettings = (key: "systemPrompt" | "temperature" | "enableThinking", value: any) => {
     if (!activeChat) return;
     setChats((prev) =>
       prev.map((c) => (c.id === activeChatId ? { ...c, [key]: value } : c))
@@ -325,20 +327,70 @@ function App() {
     }
   };
 
-  // Safe Markdown parser using marked library
+  // Safe Markdown parser using marked library, with custom <think> block splitting
   const renderMessageContent = (content: string) => {
     if (!content) return null;
+
+    const showThinking = activeChat?.enableThinking ?? true;
+
+    // Check for thinking blocks enclosed in <think>...</think>
+    const thinkRegex = /<think>([\s\S]*?)<\/think>/g;
+    const match = thinkRegex.exec(content);
+
+    let thinkingText = "";
+    let mainText = content;
+
+    if (match) {
+      thinkingText = match[1].trim();
+      mainText = content.replace(thinkRegex, "").trim();
+    } else {
+      // Handle incomplete thinking tags during streaming (e.g. <think> without closing </think>)
+      if (content.startsWith("<think>")) {
+        const openedTagIndex = content.indexOf("<think>");
+        const closedTagIndex = content.indexOf("</think>");
+        if (closedTagIndex === -1 && openedTagIndex !== -1) {
+          thinkingText = content.substring(openedTagIndex + 7).trim();
+          mainText = "";
+        }
+      }
+    }
+
     try {
-      const htmlContent = marked.parse(content, { async: false }) as string;
+      const parsedMainHTML = marked.parse(mainText, { async: false }) as string;
+      
       return (
-        <div 
-          className="markdown-body" 
-          dangerouslySetInnerHTML={{ __html: htmlContent }} 
-        />
+        <div>
+          {/* Render thinking block if enabled and text exists */}
+          {showThinking && thinkingText && (
+            <div className="thinking-process-block">
+              <div className="thinking-title">
+                <span>💭 Thinking Process</span>
+              </div>
+              <div className="thinking-content">{thinkingText}</div>
+            </div>
+          )}
+          {/* Render main markdown response */}
+          {parsedMainHTML && (
+            <div 
+              className="markdown-body" 
+              dangerouslySetInnerHTML={{ __html: parsedMainHTML }} 
+            />
+          )}
+        </div>
       );
     } catch (err) {
       console.error("Failed to parse markdown:", err);
-      return <div className="markdown-body" style={{ whiteSpace: "pre-wrap" }}>{content}</div>;
+      return (
+        <div>
+          {showThinking && thinkingText && (
+            <div className="thinking-process-block">
+              <div className="thinking-title">💭 Thinking Process</div>
+              <div className="thinking-content">{thinkingText}</div>
+            </div>
+          )}
+          <div className="markdown-body" style={{ whiteSpace: "pre-wrap" }}>{mainText}</div>
+        </div>
+      );
     }
   };
 
@@ -422,6 +474,20 @@ function App() {
                     value={activeChat.systemPrompt}
                     onChange={(e) => updateActiveChatSettings("systemPrompt", e.target.value)}
                     placeholder="System prompt instructions..."
+                  />
+                </div>
+                <div className="parameter-row" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingTop: "4px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: "500", color: "var(--text-secondary)" }}>Show Thinking</span>
+                  <input
+                    type="checkbox"
+                    checked={activeChat.enableThinking ?? true}
+                    onChange={(e) => updateActiveChatSettings("enableThinking", e.target.checked)}
+                    style={{
+                      width: "18px",
+                      height: "18px",
+                      accentColor: "var(--accent-blue)",
+                      cursor: "pointer",
+                    }}
                   />
                 </div>
               </div>
