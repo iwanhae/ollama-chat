@@ -9,6 +9,7 @@ import type { Message, ChatSession } from "../types/chat";
 
 mermaid.initialize({
   startOnLoad: false,
+  suppressErrorRendering: true,
   theme: "base",
   themeVariables: {
     fontFamily: "Courier Prime, Courier New, monospace",
@@ -71,45 +72,64 @@ export function MessageRow({
           const graphDefinition = node.textContent || '';
           const id = `mermaid-${msg.id || index}-${i}`;
           
-          mermaid.render(id, graphDefinition).then(({ svg }) => {
-            const preElement = node.parentElement;
-            if (preElement && preElement.tagName.toLowerCase() === 'pre') {
-              const div = document.createElement('div');
-              div.className = 'mermaid-rendered';
-              div.innerHTML = svg;
-              preElement.replaceWith(div);
-            }
-          }).catch(e => {
-            console.error("Mermaid render error:", e);
-            const preElement = node.parentElement;
-            if (preElement && preElement.tagName.toLowerCase() === 'pre') {
-              const errorDiv = document.createElement('div');
-              errorDiv.className = 'mermaid-error-box';
-
-              const titleDiv = document.createElement('div');
-              titleDiv.className = 'mermaid-error-title';
-              titleDiv.innerText = '[ Syntax Error in Mermaid ]';
-              errorDiv.appendChild(titleDiv);
-
-              const msgDiv = document.createElement('div');
-              msgDiv.className = 'mermaid-error-msg';
-              msgDiv.innerText = e.message || String(e) || "Unknown error";
-              errorDiv.appendChild(msgDiv);
-
-              const btn = document.createElement('button');
-              btn.className = 'msg-action-btn fix-mermaid-btn';
-              btn.innerText = 'Send Error to LLM';
+          const renderMermaid = async () => {
+            try {
+              // Try parsing first; it throws an error if there's a syntax issue
+              await mermaid.parse(graphDefinition, { suppressErrors: false });
               
-              btn.addEventListener('click', () => {
-                 if (handleSendMessage) {
-                   handleSendMessage(`The following mermaid diagram has a syntax error:\n\`\`\`mermaid\n${graphDefinition}\n\`\`\`\n\nError details:\n${e.message || String(e)}\n\nPlease fix the syntax error and redraw the diagram.`);
-                 }
+              const { svg } = await mermaid.render(id, graphDefinition);
+              const preElement = node.parentElement;
+              if (preElement && preElement.tagName.toLowerCase() === 'pre') {
+                const div = document.createElement('div');
+                div.className = 'mermaid-rendered';
+                div.innerHTML = svg;
+                preElement.replaceWith(div);
+              }
+            } catch (e: any) {
+              console.error("Mermaid syntax error:", e);
+              
+              // Clean up global error SVG elements that Mermaid might have inserted
+              const rogueError = document.getElementById('d' + id);
+              if (rogueError) rogueError.remove();
+              
+              document.querySelectorAll('[id^="dmermaid-"]').forEach(el => {
+                if (el.tagName.toLowerCase() === 'svg' && el.innerHTML.includes('Syntax error')) {
+                  el.remove();
+                }
               });
-              
-              errorDiv.appendChild(btn);
-              preElement.replaceWith(errorDiv);
+
+              const preElement = node.parentElement;
+              if (preElement && preElement.tagName.toLowerCase() === 'pre') {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'mermaid-error-box';
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'mermaid-error-title';
+                titleDiv.innerText = '[ Syntax Error in Mermaid ]';
+                errorDiv.appendChild(titleDiv);
+
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'mermaid-error-msg';
+                msgDiv.innerText = e.message || String(e) || "Unknown error";
+                errorDiv.appendChild(msgDiv);
+
+                const btn = document.createElement('button');
+                btn.className = 'msg-action-btn fix-mermaid-btn';
+                btn.innerText = 'Send Error to LLM';
+                
+                btn.addEventListener('click', () => {
+                   if (handleSendMessage) {
+                     handleSendMessage(`The following mermaid diagram has a syntax error:\n\`\`\`mermaid\n${graphDefinition}\n\`\`\`\n\nError details:\n${e.message || String(e)}\n\nPlease fix the syntax error and redraw the diagram.`);
+                   }
+                });
+                
+                errorDiv.appendChild(btn);
+                preElement.replaceWith(errorDiv);
+              }
             }
-          });
+          };
+          
+          renderMermaid();
           
           node.setAttribute('data-mermaid-rendered', 'true');
         } catch (e) {
