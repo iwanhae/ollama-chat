@@ -182,16 +182,22 @@ function App() {
   };
 
   const createNewChat = (initialModel?: string) => {
+    const currentActive = chats.find((c) => c.id === activeChatId);
     const defaultModel = initialModel || selectedModel || (models.length > 0 ? models[0].name : "");
+    const defaultSystemPrompt = currentActive?.systemPrompt ?? "You are a helpful and polite AI Assistant.";
+    const defaultTemperature = currentActive?.temperature ?? 0.7;
+    const defaultEnableThinking = currentActive?.enableThinking ?? false;
+    const defaultForceJson = currentActive?.forceJson ?? false;
+
     const newChat: ChatSession = {
       id: Date.now().toString(),
       title: `New Chat (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
       messages: [],
-      systemPrompt: "You are a helpful and polite AI Assistant.",
-      temperature: 0.7,
+      systemPrompt: defaultSystemPrompt,
+      temperature: defaultTemperature,
       model: defaultModel,
-      enableThinking: false, // Default disabled (thinking off)
-      forceJson: false, // Default disabled
+      enableThinking: defaultEnableThinking,
+      forceJson: defaultForceJson,
     };
     setChats((prev) => [newChat, ...prev]);
     setActiveChatId(newChat.id);
