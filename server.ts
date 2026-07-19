@@ -1,9 +1,10 @@
 import { serve } from "bun";
 
-const OLLAMA_HOST = "http://localhost:11434";
-const PORT = 3000;
+const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
+const PORT = process.env.PORT || 3000;
 
-console.log(`Starting Bun server on http://localhost:${PORT}...`);
+console.log(`Starting Bun server on port ${PORT}...`);
+console.log(`Targeting Ollama at: ${OLLAMA_HOST}`);
 
 serve({
   port: PORT,
