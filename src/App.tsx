@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { marked } from "marked";
 import "./App.css";
+
+// Configure marked options for line breaks and GitHub Flavored Markdown
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -318,34 +325,21 @@ function App() {
     }
   };
 
-  // Basic Markdown-like parser for Code Blocks
+  // Safe Markdown parser using marked library
   const renderMessageContent = (content: string) => {
     if (!content) return null;
-    const parts = content.split("```");
-    return parts.map((part, index) => {
-      // Odd indices are code blocks
-      if (index % 2 === 1) {
-        const firstLineEnd = part.indexOf("\n");
-        let lang = "";
-        let code = part;
-        if (firstLineEnd !== -1) {
-          lang = part.substring(0, firstLineEnd).trim();
-          code = part.substring(firstLineEnd + 1);
-        }
-        return (
-          <pre key={index}>
-            {lang && <div style={{ fontSize: "9px", color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{lang}</div>}
-            <code>{code}</code>
-          </pre>
-        );
-      }
-      // Even indices are text blocks.
+    try {
+      const htmlContent = marked.parse(content, { async: false }) as string;
       return (
-        <span key={index} style={{ whiteSpace: "pre-wrap" }}>
-          {part}
-        </span>
+        <div 
+          className="markdown-body" 
+          dangerouslySetInnerHTML={{ __html: htmlContent }} 
+        />
       );
-    });
+    } catch (err) {
+      console.error("Failed to parse markdown:", err);
+      return <div className="markdown-body" style={{ whiteSpace: "pre-wrap" }}>{content}</div>;
+    }
   };
 
   return (
@@ -368,7 +362,7 @@ function App() {
         <div className="brand-section">
           <div className="brand-logo">⌘</div>
           <span className="brand-title">Ollama Console</span>
-          <span className="brand-version">v1.1</span>
+          <span className="brand-version">v1.2</span>
         </div>
 
         <div className="sidebar-content">
