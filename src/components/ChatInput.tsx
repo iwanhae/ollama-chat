@@ -16,6 +16,15 @@ export function ChatInput({ manager }: ChatInputProps) {
     }
   }, [inputText]);
 
+  useEffect(() => {
+    if (!isGenerating && isOnline && textareaRef.current) {
+      // Small timeout to ensure the disabled state has been fully removed from DOM
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
+    }
+  }, [isGenerating, isOnline]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
