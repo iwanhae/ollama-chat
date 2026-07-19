@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { useChatManager } from "./hooks/useChatManager";
 import { TopControlBar } from "./components/TopControlBar";
 import { MessageRow } from "./components/MessageRow";
@@ -78,19 +78,6 @@ function App() {
             ))
           )}
 
-          {/* Typing Indicator */}
-          <AnimatePresence>
-            {manager.isGenerating && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="typing-indicator"
-              >
-                <div className="typing-cursor"></div>
-              </motion.div>
-            )}
-          </AnimatePresence>
           <div ref={messagesEndRef} />
         </div>
 
