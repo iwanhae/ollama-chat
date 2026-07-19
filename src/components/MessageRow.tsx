@@ -64,7 +64,7 @@ export function MessageRow({
     let isFormattedJson = false;
     let formattedJsonHTML = "";
 
-    if (activeChat?.forceJson && mainText.trim()) {
+    if (msg.role === "assistant" && activeChat?.forceJson && mainText.trim()) {
       try {
         const jsonObj = JSON.parse(mainText);
         const prettyJson = JSON.stringify(jsonObj, null, 2);
@@ -88,7 +88,10 @@ export function MessageRow({
           {showThinking && thinkingText && (
             <div className="thinking-process-block">
               <div className="thinking-title">THINKING PROCESS</div>
-              <div className="thinking-content">{thinkingText}</div>
+              <div 
+                className="thinking-content markdown-body"
+                dangerouslySetInnerHTML={{ __html: marked.parse(thinkingText, { async: false }) as string }}
+              />
             </div>
           )}
           {parsedMainHTML && (
@@ -106,7 +109,10 @@ export function MessageRow({
           {showThinking && thinkingText && (
             <div className="thinking-process-block">
               <div className="thinking-title">THINKING PROCESS</div>
-              <div className="thinking-content">{thinkingText}</div>
+              <div 
+                className="thinking-content markdown-body"
+                dangerouslySetInnerHTML={{ __html: marked.parse(thinkingText, { async: false }) as string }}
+              />
             </div>
           )}
           <div className="markdown-body" style={{ whiteSpace: "pre-wrap" }}>
