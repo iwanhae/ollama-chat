@@ -1,0 +1,578 @@
+import { useState, useEffect, useRef } from "react";
+import "./App.css";
+
+interface Message {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  systemPrompt: string;
+  temperature: number;
+  model: string;
+}
+
+interface OllamaModel {
+  name: string;
+  model: string;
+}
+
+const SUGGESTIONS = [
+  {
+    title: "Write a script",
+    desc: "Create a Python script that calculates Fibonacci numbers.",
+    prompt: "Python으로 피보나치 수열을 구하는 스크립트를 작성해줘."
+  },
+  {
+    title: "Explain a concept",
+    desc: "Explain the concept of quantum computing in simple terms.",
+    prompt: "양자 컴퓨터(Quantum Computing)의 핵심 개념을 아주 쉽게 설명해줘."
+  },
+  {
+    title: "Debug code",
+    desc: "Find bugs and suggest optimization in my Javascript function.",
+    prompt: "다음 JavaScript 함수의 버그를 찾고 최적화하는 방법을 알려줘:\n\n```js\nfunction findMax(arr) {\n  let max = 0;\n  for(let i=0; i<arr.length; i++) {\n    if(arr[i] > max) max = arr[i];\n  }\n  return max;\n}\n```"
+  },
+  {
+    title: "Help me write",
+    desc: "Write an email template asking for a project update.",
+    prompt: "협력사에 프로젝트 진행 상황(업데이트)을 정중하게 요청하는 이메일 템플릿을 작성해줘."
+  }
+];
+
+function App() {
+  const [models, setModels] = useState<OllamaModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [chats, setChats] = useState<ChatSession[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string>("");
+  const [inputText, setInputText] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // 1. Fetch models and load chats on mount
+  useEffect(() => {
+    fetchModels();
+
+    const savedChats = localStorage.getItem("ollama_chats");
+    if (savedChats) {
+      try {
+        const parsed = JSON.parse(savedChats) as ChatSession[];
+        setChats(parsed);
+        if (parsed.length > 0) {
+          setActiveChatId(parsed[0].id);
+        } else {
+          createNewChat();
+        }
+      } catch (err) {
+        console.error("Failed to parse saved chats:", err);
+        createNewChat();
+      }
+    } else {
+      createNewChat();
+    }
+  }, []);
+
+  // Save chats to localStorage on changes
+  useEffect(() => {
+    if (chats.length > 0) {
+      localStorage.setItem("ollama_chats", JSON.stringify(chats));
+    }
+  }, [chats]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chats, activeChatId, isGenerating]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+    }
+  }, [inputText]);
+
+  const activeChat = chats.find((c) => c.id === activeChatId);
+
+  // Sync model with current active chat when selectedModel changes
+  useEffect(() => {
+    if (activeChat && selectedModel && activeChat.model !== selectedModel) {
+      setChats((prev) =>
+        prev.map((c) => (c.id === activeChatId ? { ...c, model: selectedModel } : c))
+      );
+    }
+  }, [selectedModel, activeChatId]);
+
+  // Sync selectedModel UI with activeChat model when switching chats
+  useEffect(() => {
+    if (activeChat?.model) {
+      setSelectedModel(activeChat.model);
+    }
+  }, [activeChatId]);
+
+  const fetchModels = async () => {
+    try {
+      const response = await fetch("/api/models");
+      if (!response.ok) throw new Error("Server error");
+      const data = await response.json();
+      const modelsList = data.models || [];
+      setModels(modelsList);
+      setIsOnline(true);
+
+      // Default to first model if available
+      if (modelsList.length > 0 && !selectedModel) {
+        setSelectedModel(modelsList[0].name);
+      }
+    } catch (err) {
+      console.error("Failed to connect to backend/Ollama:", err);
+      setIsOnline(false);
+    }
+  };
+
+  const createNewChat = (initialModel?: string) => {
+    const defaultModel = initialModel || selectedModel || (models.length > 0 ? models[0].name : "");
+    const newChat: ChatSession = {
+      id: Date.now().toString(),
+      title: `New Chat (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+      messages: [],
+      systemPrompt: "You are a helpful and polite AI Assistant.",
+      temperature: 0.7,
+      model: defaultModel,
+    };
+    setChats((prev) => [newChat, ...prev]);
+    setActiveChatId(newChat.id);
+  };
+
+  const deleteChat = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = chats.filter((c) => c.id !== id);
+    setChats(updated);
+
+    if (activeChatId === id) {
+      if (updated.length > 0) {
+        setActiveChatId(updated[0].id);
+      } else {
+        createNewChat();
+      }
+    }
+  };
+
+  const clearCurrentChat = () => {
+    if (!activeChat) return;
+    if (window.confirm("현재 대화 내용을 모두 삭제하시겠습니까?")) {
+      setChats((prev) =>
+        prev.map((c) => (c.id === activeChatId ? { ...c, messages: [] } : c))
+      );
+    }
+  };
+
+  const updateActiveChatSettings = (key: "systemPrompt" | "temperature", value: any) => {
+    if (!activeChat) return;
+    setChats((prev) =>
+      prev.map((c) => (c.id === activeChatId ? { ...c, [key]: value } : c))
+    );
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!inputText.trim() || isGenerating || !activeChat) return;
+
+    const userPrompt = inputText.trim();
+    setInputText("");
+
+    // 1. Add User Message
+    const userMsg: Message = { role: "user", content: userPrompt };
+    const updatedMessages = [...activeChat.messages, userMsg];
+
+    // Update active chat title if it's the first message
+    const currentTitle = activeChat.title.startsWith("New Chat")
+      ? (userPrompt.length > 20 ? userPrompt.substring(0, 20) + "..." : userPrompt)
+      : activeChat.title;
+
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === activeChatId
+          ? {
+              ...c,
+              title: currentTitle,
+              messages: updatedMessages,
+            }
+          : c
+      )
+    );
+
+    // 2. Prepare for Assistant Message Stream
+    setIsGenerating(true);
+
+    const assistantMsgIndex = updatedMessages.length;
+    const initialAssistantMsg: Message = { role: "assistant", content: "" };
+
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === activeChatId
+          ? { ...c, messages: [...updatedMessages, initialAssistantMsg] }
+          : c
+      )
+    );
+
+    try {
+      // Build message payload
+      const messagesPayload: Message[] = [];
+      
+      // Inject System Prompt if present
+      if (activeChat.systemPrompt.trim()) {
+        messagesPayload.push({ role: "system", content: activeChat.systemPrompt });
+      }
+
+      // Add conversation history
+      messagesPayload.push(...updatedMessages);
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: selectedModel || activeChat.model,
+          messages: messagesPayload,
+          options: {
+            temperature: activeChat.temperature,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No readable stream in response");
+
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+
+        // Keep the last incomplete line in the buffer
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const parsed = JSON.parse(line);
+            const chunk = parsed.message?.content || "";
+
+            setChats((prev) =>
+              prev.map((c) => {
+                if (c.id !== activeChatId) return c;
+                const newMessages = [...c.messages];
+                if (newMessages[assistantMsgIndex]) {
+                  newMessages[assistantMsgIndex] = {
+                    ...newMessages[assistantMsgIndex],
+                    content: newMessages[assistantMsgIndex].content + chunk,
+                  };
+                }
+                return { ...c, messages: newMessages };
+              })
+            );
+          } catch (e) {
+            console.warn("Could not parse ndjson line:", line, e);
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error("Stream generation failed:", err);
+      setChats((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeChatId) return c;
+          const newMessages = [...c.messages];
+          if (newMessages[assistantMsgIndex]) {
+            newMessages[assistantMsgIndex] = {
+              ...newMessages[assistantMsgIndex],
+              content: newMessages[assistantMsgIndex].content + `\n\n*[에러 발생: Ollama 모델 생성에 실패했습니다. (${err.message})]*`,
+            };
+          }
+          return { ...c, messages: newMessages };
+        })
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Basic Markdown-like parser for Code Blocks
+  const renderMessageContent = (content: string) => {
+    if (!content) return null;
+    const parts = content.split("```");
+    return parts.map((part, index) => {
+      // Odd indices are code blocks
+      if (index % 2 === 1) {
+        // Extract language if specified, e.g. "python\n..."
+        const firstLineEnd = part.indexOf("\n");
+        let lang = "";
+        let code = part;
+        if (firstLineEnd !== -1) {
+          lang = part.substring(0, firstLineEnd).trim();
+          code = part.substring(firstLineEnd + 1);
+        }
+        return (
+          <pre key={index}>
+            {lang && <div style={{ fontSize: "10px", color: "var(--text-muted)", marginBottom: "4px", textTransform: "uppercase" }}>{lang}</div>}
+            <code>{code}</code>
+          </pre>
+        );
+      }
+      // Even indices are text blocks. Render basic line breaks.
+      return (
+        <span key={index} style={{ whiteSpace: "pre-wrap" }}>
+          {part}
+        </span>
+      );
+    });
+  };
+
+  return (
+    <div className="app-layout">
+      {/* Mobile Top Header */}
+      <div className="mobile-header">
+        <button
+          className="menu-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          ☰
+        </button>
+        <span className="brand-title" style={{ fontSize: "16px", marginLeft: "12px" }}>
+          Ollama Chat
+        </span>
+      </div>
+
+      {/* Sidebar Panel */}
+      <div className={`sidebar ${mobileMenuOpen ? "open" : ""}`}>
+        <div className="brand-section">
+          <div className="brand-logo">O</div>
+          <span className="brand-title">Ollama Console</span>
+          <span className="brand-version">v1.0</span>
+        </div>
+
+        <div className="sidebar-content">
+          {/* New Chat Button */}
+          <button className="new-chat-btn" onClick={() => createNewChat()}>
+            + New Chat
+          </button>
+
+          {/* Model Selector */}
+          <div className="config-section">
+            <span className="section-label">Select Model</span>
+            <div className="select-wrapper">
+              <select
+                className="model-select"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+              >
+                {models.length === 0 ? (
+                  <option value="">No models available</option>
+                ) : (
+                  models.map((model) => (
+                    <option key={model.name} value={model.name}>
+                      {model.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+
+          {/* Parameters Panel */}
+          {activeChat && (
+            <div className="config-section">
+              <span className="section-label">Parameters</span>
+              <div className="parameter-panel">
+                <div className="parameter-row">
+                  <div className="parameter-header">
+                    <span>Temperature</span>
+                    <span>{activeChat.temperature}</span>
+                  </div>
+                  <input
+                    type="range"
+                    className="parameter-input-range"
+                    min="0.1"
+                    max="1.5"
+                    step="0.1"
+                    value={activeChat.temperature}
+                    onChange={(e) => updateActiveChatSettings("temperature", parseFloat(e.target.value))}
+                  />
+                </div>
+                <div className="parameter-row">
+                  <div className="parameter-header">
+                    <span>System Prompt</span>
+                  </div>
+                  <textarea
+                    className="system-prompt-textarea"
+                    value={activeChat.systemPrompt}
+                    onChange={(e) => updateActiveChatSettings("systemPrompt", e.target.value)}
+                    placeholder="System prompt instructions..."
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Chat History Sessions */}
+          <div className="history-section">
+            <span className="section-label">Chat History</span>
+            <div className="history-list">
+              {chats.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`history-item ${chat.id === activeChatId ? "active" : ""}`}
+                  onClick={() => {
+                    setActiveChatId(chat.id);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <span className="history-title">{chat.title}</span>
+                  <button
+                    className="delete-history-btn"
+                    onClick={(e) => deleteChat(chat.id, e)}
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar Footer with Ollama Status */}
+        <div className="sidebar-footer">
+          <div className={`status-dot ${isOnline ? "" : "offline"}`}></div>
+          <span className="status-text">
+            {isOnline ? "Ollama Connected" : "Ollama Offline"}
+          </span>
+          <button
+            className="icon-btn"
+            style={{ marginLeft: "auto", width: "28px", height: "28px" }}
+            onClick={fetchModels}
+            title="Refresh Ollama Connection"
+          >
+            🔄
+          </button>
+        </div>
+      </div>
+
+      {/* Main Chat Container */}
+      <div className="chat-container">
+        {/* Top Header */}
+        <div className="chat-header">
+          <div className="header-model-info">
+            <div className="header-model-name">
+              {activeChat ? activeChat.model || "Select Model" : "Select Model"}
+            </div>
+            <div className="header-model-desc">
+              {isOnline ? "Local Endpoint Active" : "Endpoint Offline"}
+            </div>
+          </div>
+
+          <div className="header-actions">
+            <button className="icon-btn" onClick={clearCurrentChat} title="Clear Chat Messages">
+              🗑️
+            </button>
+            <button className="icon-btn" onClick={() => createNewChat()} title="Start New Session">
+              ➕
+            </button>
+          </div>
+        </div>
+
+        {/* Message Feed */}
+        <div className="chat-messages">
+          {activeChat && activeChat.messages.length === 0 ? (
+            <div className="empty-state">
+              <h1 className="empty-title">Ollama Playground</h1>
+              <p className="empty-subtitle">
+                Bun과 React로 구동되는 로컬 AI 플레이그라운드입니다. 아래 제안들을 시험해 보거나 직접 프롬프트를 작성해 보세요.
+              </p>
+              <div className="suggestions-grid">
+                {SUGGESTIONS.map((s, idx) => (
+                  <div
+                    key={idx}
+                    className="suggestion-card"
+                    onClick={() => setInputText(s.prompt)}
+                  >
+                    <div className="suggestion-header">{s.title}</div>
+                    <div className="suggestion-body">{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            activeChat?.messages.map((msg, index) => (
+              <div key={index} className={`message-row ${msg.role}`}>
+                <div className="message-avatar">
+                  {msg.role === "user" ? "U" : "AI"}
+                </div>
+                <div className="message-bubble">
+                  {renderMessageContent(msg.content)}
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Typing Indicator */}
+          {isGenerating && (
+            <div className="typing-indicator">
+              <div className="typing-dot"></div>
+              <div className="typing-dot"></div>
+              <div className="typing-dot"></div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Bar */}
+        <div className="input-area">
+          <div className="input-container">
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              className="chat-input"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="무엇이든 물어보세요... (Shift+Enter로 줄바꿈, Enter로 전송)"
+              disabled={isGenerating || !isOnline}
+            />
+            <button
+              className="send-btn"
+              onClick={handleSubmit}
+              disabled={!inputText.trim() || isGenerating || !isOnline}
+            >
+              ➔
+            </button>
+          </div>
+          <div className="input-meta">
+            <span>Model: {selectedModel || "None"}</span>
+            <span>Bun + Vite + React App</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
