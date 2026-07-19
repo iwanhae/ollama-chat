@@ -684,6 +684,58 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+/* Message Actions (Edit and Regenerate on hover) */
+.message-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: 82%;
+}
+
+.message-row.user .message-bubble-wrapper {
+  align-items: flex-end;
+}
+
+.message-row.assistant .message-bubble-wrapper {
+  align-items: flex-start;
+}
+
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.message-row:hover .message-actions {
+  opacity: 1;
+}
+
+.msg-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.msg-action-btn:hover {
+  color: var(--accent-blue);
+  background-color: var(--bg-card-hover);
+}
+
+.message-row.user .msg-action-btn:hover {
+  color: #3ea4ff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Typing indicator bubble */
 .typing-indicator {
   display: flex;

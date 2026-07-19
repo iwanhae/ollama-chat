@@ -393,6 +393,152 @@ function App() {
     }
   };
 
+  const handleEditMessage = (index: number) => {
+    if (!activeChat || isGenerating) return;
+    const targetMessage = activeChat.messages[index];
+    if (targetMessage.role !== "user") return;
+
+    // 1. Populate input field
+    setInputText(targetMessage.content);
+
+    // 2. Truncate conversation history to remove this message and all messages after it
+    const updatedMessages = activeChat.messages.slice(0, index);
+    setChats((prev) =>
+      prev.map((c) => (c.id === activeChatId ? { ...c, messages: updatedMessages } : c))
+    );
+
+    // 3. Focus textarea
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
+  };
+
+  const handleRegenerate = async (index: number) => {
+    if (!activeChat || isGenerating) return;
+
+    // Find preceding history (everything up to this assistant message)
+    const history = activeChat.messages.slice(0, index);
+    
+    // Check if the history has a preceding user message
+    if (history.length === 0 || history[history.length - 1].role !== "user") {
+      alert("재생성할 이전 질문(User)을 찾을 수 없습니다.");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    // Insert new blank assistant message
+    const assistantMsgIndex = history.length;
+    const initialAssistantMsg: Message = { role: "assistant", content: "", id: `msg-ai-${Date.now()}` };
+    const updatedMessages = [...history, initialAssistantMsg];
+
+    setChats((prev) =>
+      prev.map((c) => (c.id === activeChatId ? { ...c, messages: updatedMessages } : c))
+    );
+
+    try {
+      const messagesPayload: Message[] = [];
+      if (activeChat.systemPrompt.trim()) {
+        messagesPayload.push({ role: "system", content: activeChat.systemPrompt });
+      }
+      messagesPayload.push(...history);
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: selectedModel || activeChat.model,
+          messages: messagesPayload,
+          think: activeChat.enableThinking ?? false,
+          format: activeChat.forceJson ? "json" : undefined,
+          options: {
+            temperature: activeChat.temperature,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No readable stream in response");
+
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+      let hasStartedThinking = false;
+      let hasFinishedThinking = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const parsed = JSON.parse(line);
+            let chunk = "";
+            const thinkingToken = parsed.message?.thinking || "";
+            const contentToken = parsed.message?.content || "";
+
+            if (thinkingToken) {
+              if (!hasStartedThinking) {
+                chunk += "<think>";
+                hasStartedThinking = true;
+              }
+              chunk += thinkingToken;
+            } else if (contentToken) {
+              if (hasStartedThinking && !hasFinishedThinking) {
+                chunk += "</think>\n\n";
+                hasFinishedThinking = true;
+              }
+              chunk += contentToken;
+            }
+
+            if (!chunk) continue;
+
+            setChats((prev) =>
+              prev.map((c) => {
+                if (c.id !== activeChatId) return c;
+                const newMessages = [...c.messages];
+                if (newMessages[assistantMsgIndex]) {
+                  newMessages[assistantMsgIndex] = {
+                    ...newMessages[assistantMsgIndex],
+                    content: newMessages[assistantMsgIndex].content + chunk,
+                  };
+                }
+                return { ...c, messages: newMessages };
+              })
+            );
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error("Stream generation failed:", err);
+      setChats((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeChatId) return c;
+          const newMessages = [...c.messages];
+          if (newMessages[assistantMsgIndex]) {
+            newMessages[assistantMsgIndex] = {
+              ...newMessages[assistantMsgIndex],
+              content: newMessages[assistantMsgIndex].content + `\n\n*[에러 발생: Ollama 모델 생성에 실패했습니다. (${err.message})]*`,
+            };
+          }
+          return { ...c, messages: newMessages };
+        })
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // Safe Markdown parser using marked library, with custom <think> block splitting
   const renderMessageContent = (content: string) => {
     if (!content) return null;
@@ -712,8 +858,33 @@ function App() {
                 transition={{ type: "spring", bounce: 0, duration: 0.4 }}
                 className={`message-row ${msg.role}`}
               >
-                <div className="message-bubble">
-                  {renderMessageContent(msg.content)}
+                <div className="message-bubble-wrapper">
+                  <div className="message-bubble">
+                    {renderMessageContent(msg.content)}
+                  </div>
+                  {/* Action items underneath the bubble shown on hover */}
+                  {!isGenerating && (
+                    <div className="message-actions">
+                      {msg.role === "user" && (
+                        <button
+                          className="msg-action-btn"
+                          onClick={() => handleEditMessage(index)}
+                          title="이전 대화로 분기 및 편집 (Edit & Branch)"
+                        >
+                          ✏️ 편집 및 분기
+                        </button>
+                      )}
+                      {msg.role === "assistant" && msg.content && (
+                        <button
+                          className="msg-action-btn"
+                          onClick={() => handleRegenerate(index)}
+                          title="이후 답변 재생성 (Regenerate)"
+                        >
+                          ↻ 답변 재생성
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))
