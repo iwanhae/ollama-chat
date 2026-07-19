@@ -75,6 +75,7 @@ function App() {
                 isGenerating={manager.isGenerating}
                 handleEditMessage={manager.handleEditMessage}
                 handleRegenerate={manager.handleRegenerate}
+                handleSendMessage={manager.sendMessage}
               />
             ))
           )}

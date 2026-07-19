@@ -285,13 +285,10 @@ export function useChatManager() {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!inputText.trim() || isGenerating || !activeChat) return;
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isGenerating || !activeChat) return;
 
-    const userPrompt = inputText.trim();
-    setInputText("");
-
-    const userMsg: Message = { role: "user", content: userPrompt, id: `msg-user-${Date.now()}` };
+    const userMsg: Message = { role: "user", content: text.trim(), id: `msg-user-${Date.now()}` };
     const assistantMsg: Message = { role: "assistant", content: "", id: `msg-ai-${Date.now()}` };
     
     const updatedMessages = [...activeChat.messages, userMsg, assistantMsg];
@@ -301,8 +298,14 @@ export function useChatManager() {
       prev.map((c) => (c.id === activeChatId ? { ...c, messages: updatedMessages } : c))
     );
 
-    // Call shared stream logic using the history up to the new user message
     await sendStreamRequest(updatedMessages.slice(0, -1), assistantMsgIndex);
+  };
+
+  const handleSubmit = async () => {
+    if (!inputText.trim()) return;
+    const userPrompt = inputText.trim();
+    setInputText("");
+    await sendMessage(userPrompt);
   };
 
   const handleEditMessage = (index: number) => {
@@ -362,5 +365,6 @@ export function useChatManager() {
     handleSubmit,
     handleEditMessage,
     handleRegenerate,
+    sendMessage
   };
 }

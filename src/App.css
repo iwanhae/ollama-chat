@@ -366,10 +366,39 @@
   padding: 16px;
   background-color: var(--bg-primary);
   border: 1px dashed var(--border-strong);
+  overflow-x: auto;
 }
 .mermaid-rendered svg {
   max-width: 100%;
   height: auto;
+}
+
+.mermaid-error-box {
+  border: 1px dashed var(--accent-primary);
+  background-color: var(--bg-secondary);
+  padding: 16px;
+  margin: 16px 0;
+  overflow: hidden;
+}
+
+.mermaid-error-title {
+  color: var(--accent-primary);
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-family: var(--font-ui);
+}
+
+.mermaid-error-msg {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  border-left: 2px solid var(--accent-primary);
+  padding-left: 8px;
 }
 
 .markdown-body strong, .markdown-body b {

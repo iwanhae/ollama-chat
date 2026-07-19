@@ -46,6 +46,7 @@ interface MessageRowProps {
   isGenerating: boolean;
   handleEditMessage: (index: number) => void;
   handleRegenerate: (index: number) => void;
+  handleSendMessage?: (text: string) => void;
 }
 
 export function MessageRow({
@@ -55,6 +56,7 @@ export function MessageRow({
   isGenerating,
   handleEditMessage,
   handleRegenerate,
+  handleSendMessage
 }: MessageRowProps) {
   const rowRef = useRef<HTMLDivElement>(null);
 
@@ -79,6 +81,34 @@ export function MessageRow({
             }
           }).catch(e => {
             console.error("Mermaid render error:", e);
+            const preElement = node.parentElement;
+            if (preElement && preElement.tagName.toLowerCase() === 'pre') {
+              const errorDiv = document.createElement('div');
+              errorDiv.className = 'mermaid-error-box';
+
+              const titleDiv = document.createElement('div');
+              titleDiv.className = 'mermaid-error-title';
+              titleDiv.innerText = '[ Syntax Error in Mermaid ]';
+              errorDiv.appendChild(titleDiv);
+
+              const msgDiv = document.createElement('div');
+              msgDiv.className = 'mermaid-error-msg';
+              msgDiv.innerText = e.message || String(e) || "Unknown error";
+              errorDiv.appendChild(msgDiv);
+
+              const btn = document.createElement('button');
+              btn.className = 'msg-action-btn fix-mermaid-btn';
+              btn.innerText = 'Send Error to LLM';
+              
+              btn.addEventListener('click', () => {
+                 if (handleSendMessage) {
+                   handleSendMessage(`The following mermaid diagram has a syntax error:\n\`\`\`mermaid\n${graphDefinition}\n\`\`\`\n\nError details:\n${e.message || String(e)}\n\nPlease fix the syntax error and redraw the diagram.`);
+                 }
+              });
+              
+              errorDiv.appendChild(btn);
+              preElement.replaceWith(errorDiv);
+            }
           });
           
           node.setAttribute('data-mermaid-rendered', 'true');
