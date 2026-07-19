@@ -1,14 +1,34 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import hljs from "highlight.js";
 import markedKatex from "marked-katex-extension";
+import mermaid from "mermaid";
 import type { Message, ChatSession } from "../types/chat";
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "base",
+  themeVariables: {
+    fontFamily: "Courier Prime, Courier New, monospace",
+    primaryColor: "#F2F0E6",
+    primaryTextColor: "#111111",
+    primaryBorderColor: "#111111",
+    lineColor: "#111111",
+    secondaryColor: "#EBE8DA",
+    tertiaryColor: "#EAE6D6",
+    background: "#F2F0E6"
+  }
+});
 
 marked.use(
   markedHighlight({
     langPrefix: 'hljs language-',
     highlight(code, lang) {
+      if (lang === 'mermaid') {
+        return code;
+      }
       const language = hljs.getLanguage(lang) ? lang : 'plaintext';
       return hljs.highlight(code, { language }).value;
     }
@@ -36,6 +56,38 @@ export function MessageRow({
   handleEditMessage,
   handleRegenerate,
 }: MessageRowProps) {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Only render mermaid diagrams if generation is complete
+    if (!isGenerating && rowRef.current) {
+      const mermaidNodes = rowRef.current.querySelectorAll('code.language-mermaid');
+      mermaidNodes.forEach((node, i) => {
+        if (node.getAttribute('data-mermaid-rendered') === 'true') return;
+        
+        try {
+          const graphDefinition = node.textContent || '';
+          const id = `mermaid-${msg.id || index}-${i}`;
+          
+          mermaid.render(id, graphDefinition).then(({ svg }) => {
+            const preElement = node.parentElement;
+            if (preElement && preElement.tagName.toLowerCase() === 'pre') {
+              const div = document.createElement('div');
+              div.className = 'mermaid-rendered';
+              div.innerHTML = svg;
+              preElement.replaceWith(div);
+            }
+          }).catch(e => {
+            console.error("Mermaid render error:", e);
+          });
+          
+          node.setAttribute('data-mermaid-rendered', 'true');
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
+  }, [msg.content, isGenerating, msg.id, index]);
   const renderMessageContent = (content: string) => {
     if (!content) return null;
 
@@ -128,6 +180,7 @@ export function MessageRow({
 
   return (
     <motion.div
+      ref={rowRef}
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", bounce: 0, duration: 0.6 }}
