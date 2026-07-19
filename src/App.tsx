@@ -23,6 +23,7 @@ interface ChatSession {
   temperature: number;
   model: string;
   enableThinking?: boolean; // Toggle to show/hide thinking block
+  forceJson?: boolean; // Force JSON output mode
 }
 
 interface OllamaModel {
@@ -155,7 +156,8 @@ function App() {
       systemPrompt: "You are a helpful and polite AI Assistant.",
       temperature: 0.7,
       model: defaultModel,
-      enableThinking: true, // Default enabled
+      enableThinking: false, // Default disabled (thinking off)
+      forceJson: false, // Default disabled
     };
     setChats((prev) => [newChat, ...prev]);
     setActiveChatId(newChat.id);
@@ -184,7 +186,7 @@ function App() {
     }
   };
 
-  const updateActiveChatSettings = (key: "systemPrompt" | "temperature" | "enableThinking", value: any) => {
+  const updateActiveChatSettings = (key: "systemPrompt" | "temperature" | "enableThinking" | "forceJson", value: any) => {
     if (!activeChat) return;
     setChats((prev) =>
       prev.map((c) => (c.id === activeChatId ? { ...c, [key]: value } : c))
@@ -257,7 +259,8 @@ function App() {
         body: JSON.stringify({
           model: selectedModel || activeChat.model,
           messages: messagesPayload,
-          think: activeChat.enableThinking ?? true, // Set think parameter at request level
+          think: activeChat.enableThinking ?? false,
+          format: activeChat.forceJson ? "json" : undefined, // Force JSON mode at request level
           options: {
             temperature: activeChat.temperature,
           },
@@ -378,8 +381,30 @@ function App() {
       }
     }
 
+    // Prettify JSON if forceJson is enabled
+    let isFormattedJson = false;
+    let formattedJsonHTML = "";
+
+    if (activeChat?.forceJson && mainText.trim()) {
+      try {
+        // Try to parse clean JSON
+        const jsonObj = JSON.parse(mainText);
+        const prettyJson = JSON.stringify(jsonObj, null, 2);
+        // Build a Markdown code block with 'json' syntax so that marked parses it with proper wrappers
+        const markdownCodeBlock = "```json\n" + prettyJson + "\n```";
+        formattedJsonHTML = marked.parse(markdownCodeBlock, { async: false }) as string;
+        isFormattedJson = true;
+      } catch (e) {
+        // If parsing fails (e.g. streaming has not finished and the JSON is incomplete)
+        // Render the raw stream inside a code block for temporary highlighting
+        const incompleteCodeBlock = "```json\n" + mainText + "\n```";
+        formattedJsonHTML = marked.parse(incompleteCodeBlock, { async: false }) as string;
+        isFormattedJson = true;
+      }
+    }
+
     try {
-      const parsedMainHTML = marked.parse(mainText, { async: false }) as string;
+      const parsedMainHTML = isFormattedJson ? formattedJsonHTML : (marked.parse(mainText, { async: false }) as string);
       
       return (
         <div>
@@ -392,7 +417,7 @@ function App() {
               <div className="thinking-content">{thinkingText}</div>
             </div>
           )}
-          {/* Render main markdown response */}
+          {/* Render main response */}
           {parsedMainHTML && (
             <div 
               className="markdown-body" 
@@ -503,8 +528,22 @@ function App() {
                   <span style={{ fontSize: "11px", fontWeight: "500", color: "var(--text-secondary)" }}>Show Thinking</span>
                   <input
                     type="checkbox"
-                    checked={activeChat.enableThinking ?? true}
+                    checked={activeChat.enableThinking ?? false}
                     onChange={(e) => updateActiveChatSettings("enableThinking", e.target.checked)}
+                    style={{
+                      width: "18px",
+                      height: "18px",
+                      accentColor: "var(--accent-blue)",
+                      cursor: "pointer",
+                    }}
+                  />
+                </div>
+                <div className="parameter-row" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingTop: "2px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: "500", color: "var(--text-secondary)" }}>Force JSON Mode</span>
+                  <input
+                    type="checkbox"
+                    checked={activeChat.forceJson ?? false}
+                    onChange={(e) => updateActiveChatSettings("forceJson", e.target.checked)}
                     style={{
                       width: "18px",
                       height: "18px",
