@@ -2,6 +2,12 @@ export interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   id?: string;
+  metrics?: {
+    ttftMs?: number;
+    tps?: number;
+    evalCount?: number;
+    totalDurationMs?: number;
+  };
 }
 
 export interface ChatSession {

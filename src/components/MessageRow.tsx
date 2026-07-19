@@ -131,6 +131,11 @@ export function MessageRow({
                 ↻ 답변 재생성
               </button>
             )}
+            {msg.role === "assistant" && msg.metrics && (
+              <span className="msg-metrics" style={{ marginLeft: "8px", fontSize: "11px", color: "var(--text-secondary)" }}>
+                TTFT: {(msg.metrics.ttftMs! / 1000).toFixed(2)}s | TPS: {msg.metrics.tps} | Total: {msg.metrics.evalCount} tok
+              </span>
+            )}
           </div>
         )}
       </div>

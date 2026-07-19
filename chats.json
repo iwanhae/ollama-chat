@@ -1,5 +1,15 @@
 [
   {
+    "id": "1784473531743",
+    "title": "New Chat (오전 12:05)",
+    "messages": [],
+    "systemPrompt": "",
+    "temperature": 0.7,
+    "model": "qwen3.5:4b",
+    "enableThinking": false,
+    "forceJson": true
+  },
+  {
     "id": "1784472889952",
     "title": "Why do AI compa...",
     "messages": [

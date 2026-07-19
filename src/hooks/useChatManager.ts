@@ -161,6 +161,9 @@ export function useChatManager() {
   const sendStreamRequest = async (history: Message[], assistantMsgIndex: number) => {
     if (!activeChat) return;
     
+    const startTime = performance.now();
+    let ttftMs = 0;
+
     setIsGenerating(true);
     try {
       const messagesPayload: Message[] = [];
@@ -211,6 +214,10 @@ export function useChatManager() {
             const thinkingToken = parsed.message?.thinking || "";
             const contentToken = parsed.message?.content || "";
 
+            if (ttftMs === 0 && (thinkingToken || contentToken)) {
+              ttftMs = performance.now() - startTime;
+            }
+
             if (thinkingToken) {
               if (!hasStartedThinking) {
                 chunk += "<think>";
@@ -225,7 +232,19 @@ export function useChatManager() {
               chunk += contentToken;
             }
 
-            if (!chunk) continue;
+            let metricsObj = undefined;
+            if (parsed.done && parsed.eval_count && parsed.eval_duration) {
+              const evalDurationMs = parsed.eval_duration / 1e6;
+              const tps = parsed.eval_count / (evalDurationMs / 1000);
+              metricsObj = {
+                ttftMs,
+                tps: parseFloat(tps.toFixed(2)),
+                evalCount: parsed.eval_count,
+                totalDurationMs: parsed.total_duration ? parsed.total_duration / 1e6 : evalDurationMs,
+              };
+            }
+
+            if (!chunk && !metricsObj) continue;
 
             setChats((prev) =>
               prev.map((c) => {
@@ -235,6 +254,7 @@ export function useChatManager() {
                   newMessages[assistantMsgIndex] = {
                     ...newMessages[assistantMsgIndex],
                     content: newMessages[assistantMsgIndex].content + chunk,
+                    ...(metricsObj ? { metrics: metricsObj } : {}),
                   };
                 }
                 return { ...c, messages: newMessages };
