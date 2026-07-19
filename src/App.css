@@ -251,7 +251,7 @@
 }
 
 .message-row.user {
-  background-color: var(--bg-primary);
+  background-color: var(--bg-secondary);
 }
 
 .message-row.assistant {
@@ -358,6 +358,15 @@
   margin-bottom: 16px;
 }
 
+/* Blinking cursor for the last text node while generating */
+.message-row.is-generating .markdown-body > *:last-child::after {
+  content: ' █';
+  animation: blink 1s step-end infinite;
+  color: var(--text-primary);
+  display: inline-block;
+  margin-left: 4px;
+}
+
 /* Message Meta & Actions */
 .message-footer {
   display: flex;
@@ -380,16 +389,20 @@
 
 .msg-action-btn {
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
   font-weight: 700;
+  border: 1px solid var(--border-strong);
+  padding: 4px 8px;
+  background-color: var(--bg-primary);
+  border-radius: 2px;
+  cursor: pointer;
 }
-.msg-action-btn::before { content: "[ "; }
-.msg-action-btn::after { content: " ]"; }
 
 .msg-action-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
+  color: var(--bg-primary);
+  background: var(--text-primary);
+  border-color: var(--text-primary);
 }
 
 
@@ -440,15 +453,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 12px;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--text-primary);
+  padding: 6px 16px;
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
   font-weight: 700;
+  border-radius: 2px;
   transition: all 0.1s ease;
+  cursor: pointer;
+  border: none;
 }
-.send-btn::before { content: "[ "; margin-right: 4px; }
-.send-btn::after { content: " ]"; margin-left: 4px; }
 
 .send-btn:disabled {
   opacity: 0.3;
@@ -456,11 +469,11 @@
 }
 
 .send-btn:not(:disabled):hover {
-  background-color: var(--text-primary);
-  color: var(--bg-primary);
+  background-color: var(--accent-primary);
+  color: #fff;
 }
 
-/* Typing Indicator (Block cursor) */
+/* Typing Indicator (Block cursor fallback for empty states) */
 .typing-indicator {
   display: flex;
   align-items: center;

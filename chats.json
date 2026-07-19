@@ -1,5 +1,32 @@
 [
   {
+    "id": "1784474536991",
+    "title": "New Chat (오전 12:22)",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What can you do for me?",
+        "id": "msg-user-1784474637917"
+      },
+      {
+        "role": "assistant",
+        "content": "I'm here to help with a wide variety of tasks! Here's what I can do:\n\n### **📚 Knowledge & Research**\n- Answer questions on topics (science, history, tech, culture, etc.)  \n- Explain complex concepts simply (e.g., \"How does blockchain work?\")  \n- Provide summaries or overviews of books, articles, or events  \n\n### **✍️ Writing Assistance**  \n- Draft emails, essays, stories, scripts, or social media posts  \n- Edit/polish text for clarity, tone, grammar, or style  \n- Generate ideas (plot twists, gift inspiration, creative prompts)  \n\n### **💡 Problem-Solving & Planning**  \n- Break down projects into steps (study plans, travel itineraries)  \n- Solve math/logic puzzles or debug code snippets  \n- Compare options (jobs, products, services) with pros/cons  \n\n### **🔍 Analysis & Critique**  \n- Review documents/data for patterns, errors, or insights  \n- Provide feedback on creative work (poetry, marketing copy, etc.)  \n- Analyze arguments or debate topics from multiple perspectives  \n\n### **💬 Conversational Support**  \n- Practice languages with role-play conversations  \n- Simulate job interviews or difficult scenarios  \n- Offer empathy/listening support for personal challenges *(note: I'm not a therapist)*  \n\n### **⚙️ Technical Tasks**  \n- Write/debug code (Python, JavaScript, SQL, etc.)  \n- Explain programming concepts or troubleshoot errors  \n- Create data visualizations descriptions (charts, graphs)  \n\n### **🌍 Practical Help**  \n- Plan trips (itineraries, budget tips, packing lists)  \n- Translate text between languages *(though I'm not perfect at nuanced cultural contexts)*  \n- Generate recipes, workout plans, or DIY project guides  \n\nJust let me know what you need—specifics help! For example:  \n*\"Explain quantum entanglement like I'm 10\"* → ✅ Done.  \n*\"Draft a professional rejection email for my job application\"* → ✅ Ready to draft.  \n*(Feel free to ask anything, no matter how big or small!)* 😊",
+        "id": "msg-ai-1784474637917",
+        "metrics": {
+          "ttftMs": 920.7999999998137,
+          "tps": 73.41,
+          "evalCount": 447,
+          "totalDurationMs": 7005.8875
+        }
+      }
+    ],
+    "systemPrompt": "You are a helpful assitatnt",
+    "temperature": 0.7,
+    "model": "qwen3.5:4b",
+    "enableThinking": false,
+    "forceJson": false
+  },
+  {
     "id": "1784474393132",
     "title": "New Chat (오전 12:19)",
     "messages": [
@@ -49,6 +76,54 @@
           "tps": 69.66,
           "evalCount": 127,
           "totalDurationMs": 2863.308
+        }
+      },
+      {
+        "role": "user",
+        "content": "이제 곧 3.8 나온데",
+        "id": "msg-user-1784474454556"
+      },
+      {
+        "role": "assistant",
+        "content": "그럼 **Qwen3.5** 는 이미 최신 버전이고, 기다리는 것은 더 발전된 **Qwen3.8** 이군요! 🚀  \n\n현재 저는 Qwen3.5 의 능력을 활용하고 있으며, 만약 3.8 에 어떤 새로운 기능이 추가되었는지 궁금하시다면 구체적인 내용을 알려주시면 함께 탐구할 수 있습니다. 예를 들어:  \n- 성능이 향상된 특정 분야 (예: 수학 추론, 코드 생성 등) 가 있는지  \n- 대화 방식이나 인터페이스가 어떻게 바뀔지  \n\n혹시 3.8 의 예상 기능을 기대하는 이유가 있으신가요? 😊",
+        "id": "msg-ai-1784474454556",
+        "metrics": {
+          "ttftMs": 749.5999999996275,
+          "tps": 71.42,
+          "evalCount": 131,
+          "totalDurationMs": 2580.1355
+        }
+      },
+      {
+        "role": "user",
+        "content": "혹시 파이썬 코드좀 만들 수 있어?",
+        "id": "msg-user-1784474482547"
+      },
+      {
+        "role": "assistant",
+        "content": "네, **파이썬 코드를 작성해 드릴 수 있습니다!** \n\n코드는 어떤 용도를 위해 필요하신지 알려주시면 (예: 데이터 분석, 웹 크롤링, 자동화 작업 등) 바로 만들어 드리겠습니다. 또한 코드에 대한 설명이나 수정 요청도 가능하니 언제든지 말씀해주세요!\n\n**지금 바로 도와드릴까요?**  \n어떤 코드를 원하시나요? 예를 들어:\n- **데이터 처리**: CSV/Excel 파일 읽기 및 분석\n- **웹 활용**: 웹사이트에서 정보 수집하기 (Scrapy, BeautifulSoup 등)\n- **자동화**: 반복 작업을 자동화하는 스크립트 작성\n\n혹은 다른 기능을 말씀해 주세요!",
+        "id": "msg-ai-1784474482547",
+        "metrics": {
+          "ttftMs": 829.8999999994412,
+          "tps": 72.18,
+          "evalCount": 143,
+          "totalDurationMs": 2805.8084
+        }
+      },
+      {
+        "role": "user",
+        "content": "아무거나 적당히?",
+        "id": "msg-user-1784474490731"
+      },
+      {
+        "role": "assistant",
+        "content": "좋습니다! 가장 활용도가 높고 실용적인 예제를 만들겠습니다. \n\n오늘날 데이터 분석이나 웹 크롤링이 자주 필요한데, **`python`**과 `BeautifulSoup`(웹 페이지에서 텍스트 추출하기) 를 함께 사용해서 **\"네이버 검색 결과에서 특정 키워드의 링크를 가져오는 코드\"**을 작성해 드립니다.\n\n### 🐍 파이썬 웹 크롤링 예제 (Naver Search Example)\n\n이 코드는 \"AI\"라는 단어로 네이버를 검색했을 때, 첫 페이지의 상위 5 개 결과를 제목과 URL 을 함께 추출합니다.\n\n```python\nimport requests\nfrom bs4 import BeautifulSoup\nimport time\n\n# 설정: 검색어를 입력하고 'https://www.naver.com'을 기본 도메인으로 사용합니다.\nSEARCH_KEYWORD = \"AI\" # 변경할 수 있는 부분\nBASE_URL = f\"https://www.naver.com/search.{n}\" \n\ndef get_naver_search_results(keyword, page_num=1):\n    \"\"\"네이버 검색 결과 가져오기\"\"\"\n    \n    url = f\"https://search.naver.com/.json?q={keyword}&start={(page_num-1)*10}&display=10\"\n    \n    # 헤더 설정 (브라우저처럼 보이게 해서 차단 방지)\n    headers = {\n        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' \n                    '/AppleWebKit/537.36 (KHTML, like Gecko)',\n        'Referer': url.replace('.json', '') # 네이버 검색 페이지 URL 반환값\n    \n    response = requests.get(url)\n    \n    if response.status_code == 200:\n        soup=BeautifulSoup(response.text,'html.parser')\n        \n        results=[]\n        items=soup.find_all('li',{'class':'resultItem'} )[:5]\n        \n        for item in items : \n            title=item.a.get_text()\n            \n            if not any([title, None]): continue\n            \n            result_list.append({'Title':title})\n            \n    else:\n        print(f\"에러 발생. 상태 코드 {response.status_code}\")\n\n# 실행하기 전에 필요한 라이브러리 설치 확인 (pip install requests beautifulsoup4)\nget_naver_search_results(SEARCH_KEYWORD)\n\nprint(\"검색 결과:\", result_list[:5]) # 상위 5 개만 출력\n```",
+        "id": "msg-ai-1784474490731",
+        "metrics": {
+          "ttftMs": 888.5,
+          "tps": 71.31,
+          "evalCount": 504,
+          "totalDurationMs": 7952.1919
         }
       }
     ],

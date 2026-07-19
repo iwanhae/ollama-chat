@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;700&family=Nanum+Gothic+Coding:wght@400;700&display=swap');
 
 :root {
   /* 90s Typewriter Palette */
@@ -17,9 +17,9 @@
   --accent-hover: #B71C1C;
   
   /* Typography Variables */
-  --font-ui: 'Courier Prime', 'Courier New', Courier, monospace;
-  --font-serif: 'Courier Prime', 'Courier New', Courier, monospace; /* Force mono */
-  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace;
+  --font-ui: 'Courier Prime', 'Nanum Gothic Coding', 'Courier New', Courier, monospace;
+  --font-serif: 'Courier Prime', 'Nanum Gothic Coding', 'Courier New', Courier, monospace; /* Force mono */
+  --font-mono: 'JetBrains Mono', 'Nanum Gothic Coding', 'SF Mono', Consolas, Menlo, monospace;
 }
 
 *, *::before, *::after {

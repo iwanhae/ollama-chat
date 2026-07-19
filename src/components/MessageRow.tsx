@@ -100,12 +100,15 @@ export function MessageRow({
     }
   };
 
+  const isLastMessage = index === activeChat.messages.length - 1;
+  const showGeneratingCursor = isGenerating && isLastMessage && msg.role === "assistant";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", bounce: 0, duration: 0.6 }}
-      className={`message-row ${msg.role}`}
+      className={`message-row ${msg.role} ${showGeneratingCursor ? "is-generating" : ""}`}
     >
       <div className="message-header">
         {msg.role === "user" ? "User" : "Assistant"}
